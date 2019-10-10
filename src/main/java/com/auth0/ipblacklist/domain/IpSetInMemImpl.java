@@ -46,17 +46,19 @@ public class IpSetInMemImpl implements IpSet {
       stream
         .map(s -> s.trim())
         .filter(s -> !s.startsWith("#"))
-        .forEach(ipOrSubnet -> {
-          if (SubNet.isSubnet(ipOrSubnet)) {
-            netmap24.put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
-          } else {
-            ipset.add(ipOrSubnet);
-          }
-        });
+        .forEach(ipOrSubnet -> add(ipOrSubnet));
     } catch (IOException e) {
       throw new ReloadException(e);
     }
 
     return Mono.empty();
+  }
+
+  void add(String ipOrSubnet) {
+    if (SubNet.isSubnet(ipOrSubnet)) {
+      netmap24.put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
+    } else {
+      ipset.add(ipOrSubnet);
+    }
   }
 }
