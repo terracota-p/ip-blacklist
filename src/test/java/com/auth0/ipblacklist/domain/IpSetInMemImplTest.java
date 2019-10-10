@@ -10,8 +10,7 @@ import reactor.test.StepVerifier;
 
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 public class IpSetInMemImplTest {
@@ -54,8 +53,8 @@ public class IpSetInMemImplTest {
     assertFalse(ipSet.netmapForSignificantBits(16).isEmpty());
     assertFalse(ipSet.netmapForSignificantBits(24).isEmpty());
     assertFalse(ipSet.netmapForSignificantBits(31).isEmpty());
-
     assertTrue(ipSet.netmapForSignificantBits(25).isEmpty());
+    assertEquals(5, ipSet.size());
   }
 
   @Test
@@ -86,7 +85,14 @@ public class IpSetInMemImplTest {
   }
 
   @Test
-  public void GivenBigNetset_AndIpBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
+  public void GivenBigNetset_WhenReload_ThenSize() throws ReloadException {
+    ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+
+    assertEquals(21471, ipSet.size());
+  }
+
+    @Test
+  public void GivenBigNetset_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
 
     Mono<Boolean> result = ipSet.matches("1.1.1.1");
@@ -103,4 +109,5 @@ public class IpSetInMemImplTest {
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
 
+  // TODO test that reload cleans previous data and loads new one
 }

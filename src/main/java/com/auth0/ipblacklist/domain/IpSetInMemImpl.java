@@ -1,6 +1,7 @@
 package com.auth0.ipblacklist.domain;
 
 import com.auth0.ipblacklist.exception.ReloadException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @Component
+@Slf4j
 public class IpSetInMemImpl implements IpSet {
   private final String netsetPath;
 
@@ -46,6 +48,14 @@ public class IpSetInMemImpl implements IpSet {
   }
 
   Mono<Void> reload(Path netsetPath) throws ReloadException {
+    load(netsetPath);
+
+    log.info("Size after reload: {}", size());
+
+    return Mono.empty();
+  }
+
+  private void load(Path netsetPath) throws ReloadException {
     try (Stream<String> lines = Files.lines(netsetPath)) {
       lines
         .map(s -> s.trim())
@@ -54,8 +64,14 @@ public class IpSetInMemImpl implements IpSet {
     } catch (IOException e) {
       throw new ReloadException(e);
     }
+  }
 
-    return Mono.empty();
+  int size() {
+    return ipset.size() + netsetsSize();
+  }
+
+  private int netsetsSize() {
+    return netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
   }
 
   void add(String ipOrSubnet) {
@@ -78,4 +94,5 @@ public class IpSetInMemImpl implements IpSet {
     }
     return netmapsBySignificantBits.get(significantBits);
   }
+
 }
