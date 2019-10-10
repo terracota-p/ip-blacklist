@@ -1,5 +1,7 @@
 package com.auth0.ipblacklist.controller;
 
+import com.auth0.ipblacklist.exception.ReloadException;
+import com.auth0.ipblacklist.service.IpBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,8 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class IpBlacklistController {
 
+  private final IpBlacklistService ipBlacklistService;
+
   @GetMapping("/status")
   public Mono<Void> status() {
     return Mono.empty();
@@ -23,11 +27,23 @@ public class IpBlacklistController {
   @GetMapping("/ips/{ip}")
   public Mono<ResponseEntity<String>> ips(@PathVariable String ip) {
     log.debug("GET ip {}", ip);
-    return Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+
+    return ipBlacklistService.isBlacklisted(ip)
+      .flatMap(isBlacklisted -> isBlacklisted
+        ? Mono.just(ResponseEntity.ok().build())
+        : Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT))
+      );
   }
 
   @PostMapping("/reload")
-  public Mono<Void> reload() {
-    return Mono.empty();
+  public Mono<ResponseEntity<Void>> reload() {
+    log.debug("Reload");
+    try {
+      return ipBlacklistService.reload()
+        .then(Mono.just(ResponseEntity.ok().build()));
+    } catch (ReloadException e) {
+      log.error("Error reloading", e);
+      return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+    }
   }
 }
