@@ -60,4 +60,13 @@ public class IpSetInMemImplTest {
     StepVerifier.create(result).expectNextMatches(b -> b == false).verifyComplete();
   }
 
+  @Test
+  public void GivenBigNetset_AndSubnetBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
+    ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+
+    Mono<Boolean> result = ipSet.matches("5.63.151.233");
+
+    StepVerifier.create(result).expectNextMatches(b -> b == true).verifyComplete();
+  }
+
 }
