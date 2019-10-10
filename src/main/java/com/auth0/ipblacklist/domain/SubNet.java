@@ -16,7 +16,7 @@ public class SubNet {
     return String.format("%32s", Integer.toBinaryString(info.asInteger(info.getAddress()))).replace(' ', '0');
   }
 
-  static int significantBits(String subnet) {
+  public static int significantBits(String subnet) {
     return Integer.valueOf(subnet.substring(subnet.indexOf("/") + 1));
   }
 

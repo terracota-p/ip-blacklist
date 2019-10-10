@@ -7,14 +7,10 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Component
@@ -22,8 +18,7 @@ public class IpSetInMemImpl implements IpSet {
   private final String netsetPath;
 
   private Set<String> ipset = new HashSet<>();
-  // TODO BitMask ?
-  private Map<String, String> netmap24 = new HashMap();
+  private Map<Integer, Map<String, String>> netmapsBySignificantBits = new TreeMap<>();
 
   @Autowired
   public IpSetInMemImpl(@Value("${netset.path}") String netsetPath) {
@@ -32,7 +27,16 @@ public class IpSetInMemImpl implements IpSet {
 
   @Override
   public Mono<Boolean> matches(String ip) {
-    return Mono.just(ipset.contains(ip) || netmap24.containsKey(SubNet.bitMaskFromIp(ip, 24)));
+    return Mono.just(
+      ipset.contains(ip) || anyNetmapMatches(ip)
+    );
+  }
+
+  private boolean anyNetmapMatches(String ip) {
+    return netmapsBySignificantBits.entrySet().stream()
+      .anyMatch(entry ->
+        entry.getValue().containsKey(SubNet.bitMaskFromIp(ip, entry.getKey()))
+      );
   }
 
   @Override
@@ -42,8 +46,8 @@ public class IpSetInMemImpl implements IpSet {
   }
 
   Mono<Void> reload(Path netsetPath) throws ReloadException {
-    try (Stream<String> stream = Files.lines(netsetPath)) {
-      stream
+    try (Stream<String> lines = Files.lines(netsetPath)) {
+      lines
         .map(s -> s.trim())
         .filter(s -> !s.startsWith("#"))
         .forEach(ipOrSubnet -> add(ipOrSubnet));
@@ -56,9 +60,22 @@ public class IpSetInMemImpl implements IpSet {
 
   void add(String ipOrSubnet) {
     if (SubNet.isSubnet(ipOrSubnet)) {
-      netmap24.put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
+      String subnet = ipOrSubnet;
+      // Add to corresponding map as per number of significant bits
+      netmapForSignificantBits(subnet).put(SubNet.bitMaskOfSignificantBits(subnet), subnet);
     } else {
       ipset.add(ipOrSubnet);
     }
+  }
+
+  private Map<String, String> netmapForSignificantBits(String subnet) {
+    return netmapForSignificantBits(SubNet.significantBits(subnet));
+  }
+
+  Map<String, String> netmapForSignificantBits(int significantBits) {
+    if (!netmapsBySignificantBits.containsKey(significantBits)) {
+      netmapsBySignificantBits.put(significantBits, new HashMap());
+    }
+    return netmapsBySignificantBits.get(significantBits);
   }
 }
