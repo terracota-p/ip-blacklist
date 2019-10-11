@@ -31,8 +31,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   public Mono<Boolean> matches(String ip) {
     return Mono.just(
       netsets.ipset.contains(ip) || anyNetmapMatches(ip)
-    )
-      .doOnNext(b -> log.debug("matches result: {}", b));
+    );
   }
 
   private boolean anyNetmapMatches(String ip) {
