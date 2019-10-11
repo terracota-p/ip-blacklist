@@ -91,7 +91,17 @@ public class IpSetInMemImplTest {
     assertEquals(21471, ipSet.size());
   }
 
-    @Test
+  @Test
+  public void GivenTwoNetsets_WhenReload_ThenSize() throws ReloadException {
+    ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+
+    ipSet.reload().block();
+
+    // TODO not 21471 + 4604 because a few entries are duplicated among both netsets?
+    assertEquals(26056, ipSet.size());
+  }
+
+  @Test
   public void GivenBigNetset_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
 

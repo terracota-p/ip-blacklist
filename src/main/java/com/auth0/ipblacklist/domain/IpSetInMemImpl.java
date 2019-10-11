@@ -1,6 +1,7 @@
 package com.auth0.ipblacklist.domain;
 
 import com.auth0.ipblacklist.exception.ReloadException;
+import com.auth0.ipblacklist.util.CommaSeparatedPathList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,21 +12,20 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
 @Component
 @Slf4j
 public class IpSetInMemImpl implements IpSet, CommandLineRunner {
-  private final String netsetPath;
+  private final Path[] netsetPaths;
 
   private Set<String> ipset = new HashSet<>();
   private Map<Integer, Map<String, String>> netmapsBySignificantBits = new TreeMap<>();
 
   @Autowired
-  IpSetInMemImpl(@Value("${netset.path}") String netsetPath) {
-    this.netsetPath = netsetPath;
+  IpSetInMemImpl(@Value("${netset.path}") String netsetPathsCommaSeparated) {
+    this.netsetPaths = new CommaSeparatedPathList(netsetPathsCommaSeparated).toPaths();
   }
 
   @Override
@@ -44,15 +44,14 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
   @Override
   public Mono<Void> reload() throws ReloadException {
-    // TODO allow list of netsetPaths
-    return reload(Paths.get(netsetPath));
+    return reload(netsetPaths);
   }
 
-  Mono<Void> reload(Path netsetPath) throws ReloadException {
-    load(netsetPath);
-
+  Mono<Void> reload(Path... netsetPaths) throws ReloadException {
+    for (Path netsetPath : netsetPaths) {
+      load(netsetPath);
+    }
     log.info("Size after reload: {}", size());
-
     return Mono.empty();
   }
 
