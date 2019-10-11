@@ -4,6 +4,7 @@ import com.auth0.ipblacklist.exception.ReloadException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 
 @Component
 @Slf4j
-public class IpSetInMemImpl implements IpSet {
+public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   private final String netsetPath;
 
   private Set<String> ipset = new HashSet<>();
@@ -95,4 +96,9 @@ public class IpSetInMemImpl implements IpSet {
     return netmapsBySignificantBits.get(significantBits);
   }
 
+  @Override
+  // Run initial load on application startup
+  public void run(String... args) throws Exception {
+    reload();
+  }
 }
