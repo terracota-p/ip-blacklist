@@ -10,8 +10,11 @@ mvn clean install
 
 ## Run
 
+Eg:
+
 ```shell script
-export NETSETPATH=../blocklist-ipsets/firehol_level1.netset && java -jar target/anomaly-detections-ip-0.0.0.jar
+export NETSETPATH=./src/test/resources/firehol_level1.netset,./src/test/resources/firehol_level2.netset \
+  && java -jar target/anomaly-detections-ip-0.0.0.jar
 ```
 
 ## Test

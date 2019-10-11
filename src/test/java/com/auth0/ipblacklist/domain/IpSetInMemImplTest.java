@@ -91,9 +91,29 @@ public class IpSetInMemImplTest {
     assertEquals(21471, ipSet.size());
   }
 
-    @Test
-  public void GivenBigNetset_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
+  @Test
+  public void GivenTwoNetsets_WhenReload_ThenSize() throws ReloadException {
+    ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+
+    ipSet.reload().block();
+
+    // The sum of entries minus those that are duplicated among both netsets (19 in this case)
+    assertEquals(4604 + 21471 - 19, ipSet.size());
+  }
+
+  @Test
+  public void GivenDataLoaded_WhenReloadNewData_ThenContainsOnlyNewData() throws ReloadException {
+    ipSet.reload(Paths.get("src/test/resources/firehol_level1.netset")).block();
+
     ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+
+    assertEquals(21471, ipSet.size());
+  }
+
+  @Test
+  public void GivenBigNetsets_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
+    ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+    ipSet.reload().block();
 
     Mono<Boolean> result = ipSet.matches("1.1.1.1");
 
@@ -101,13 +121,13 @@ public class IpSetInMemImplTest {
   }
 
   @Test
-  public void GivenBigNetset_AndSubnetBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
-    ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+  public void GivenBigNetsets_AndSubnetBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
+    ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+    ipSet.reload().block();
 
     Mono<Boolean> result = ipSet.matches("5.63.151.233");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
 
-  // TODO test that reload cleans previous data and loads new one
 }
