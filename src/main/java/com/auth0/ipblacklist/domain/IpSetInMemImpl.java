@@ -24,7 +24,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   private Map<Integer, Map<String, String>> netmapsBySignificantBits = new TreeMap<>();
 
   @Autowired
-  public IpSetInMemImpl(@Value("${netset.path}") String netsetPath) {
+  IpSetInMemImpl(@Value("${netset.path}") String netsetPath) {
     this.netsetPath = netsetPath;
   }
 
@@ -59,9 +59,9 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   private void load(Path netsetPath) throws ReloadException {
     try (Stream<String> lines = Files.lines(netsetPath)) {
       lines
-        .map(s -> s.trim())
+        .map(String::trim)
         .filter(s -> !s.startsWith("#"))
-        .forEach(ipOrSubnet -> add(ipOrSubnet));
+        .forEach(this::add);
     } catch (IOException e) {
       throw new ReloadException(e);
     }
@@ -77,9 +77,8 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
   void add(String ipOrSubnet) {
     if (SubNet.isSubnet(ipOrSubnet)) {
-      String subnet = ipOrSubnet;
       // Add to corresponding map as per number of significant bits
-      netmapForSignificantBits(subnet).put(SubNet.bitMaskOfSignificantBits(subnet), subnet);
+      netmapForSignificantBits(ipOrSubnet).put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
     } else {
       ipset.add(ipOrSubnet);
     }
@@ -91,7 +90,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
   Map<String, String> netmapForSignificantBits(int significantBits) {
     if (!netmapsBySignificantBits.containsKey(significantBits)) {
-      netmapsBySignificantBits.put(significantBits, new HashMap());
+      netmapsBySignificantBits.put(significantBits, new HashMap<>());
     }
     return netmapsBySignificantBits.get(significantBits);
   }
