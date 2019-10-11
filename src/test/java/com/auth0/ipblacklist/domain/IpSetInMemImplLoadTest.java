@@ -23,12 +23,12 @@ public class IpSetInMemImplLoadTest {
   private static final int PERIODS_TO_TEST = 50;
   private static final int CONCURRENT_REQUESTS_PER_PERIOD = 500;
   private static final long MS_BETWEEN_PERIODS = 100;
-  private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources");
+  private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
   private List<Long> latencies = Collections.synchronizedList(new ArrayList<>(PERIODS_TO_TEST * CONCURRENT_REQUESTS_PER_PERIOD));
 
   @Test
   public void GivenBigNetset_WhenManyMatchesRequests_ThenLatencyBelowThreshold() throws ReloadException, InterruptedException {
-    ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+    ipSet.reload().block();
 
     for (int i = 0; i < PERIODS_TO_TEST; i++) {
       // Fire eg 100 requests per second
@@ -67,7 +67,7 @@ public class IpSetInMemImplLoadTest {
 
     boolean allThreadsReachedFinishLine = finishLine.await(5, TimeUnit.SECONDS);
     if (!allThreadsReachedFinishLine) {
-      fail("some concurrent request failed");
+      fail("some concurrent request did not finish");
     }
   }
 

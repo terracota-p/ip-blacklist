@@ -101,7 +101,14 @@ public class IpSetInMemImplTest {
     assertEquals(4604 + 21471 - 19, ipSet.size());
   }
 
-  // TODO GivenDataLoaded_WhenReloadNewData_ThenContainsOnlyNewData()
+  @Test
+  public void GivenDataLoaded_WhenReloadNewData_ThenContainsOnlyNewData() throws ReloadException {
+    ipSet.reload(Paths.get("src/test/resources/firehol_level1.netset")).block();
+
+    ipSet.reload(Paths.get("src/test/resources/firehol_level2.netset")).block();
+
+    assertEquals(21471, ipSet.size());
+  }
 
   @Test
   public void GivenBigNetsets_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {

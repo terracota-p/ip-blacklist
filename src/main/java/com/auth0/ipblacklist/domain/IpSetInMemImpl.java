@@ -20,8 +20,7 @@ import java.util.stream.Stream;
 public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   private final Path[] netsetPaths;
 
-  private Set<String> ipset = new HashSet<>();
-  private Map<Integer, Map<String, String>> netmapsBySignificantBits = new TreeMap<>();
+  private Netsets netsets = new Netsets();
 
   @Autowired
   IpSetInMemImpl(@Value("${netset.path}") String netsetPathsCommaSeparated) {
@@ -31,12 +30,13 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   @Override
   public Mono<Boolean> matches(String ip) {
     return Mono.just(
-      ipset.contains(ip) || anyNetmapMatches(ip)
-    );
+      netsets.ipset.contains(ip) || anyNetmapMatches(ip)
+    )
+      .doOnNext(b -> log.debug("matches result: {}", b));
   }
 
   private boolean anyNetmapMatches(String ip) {
-    return netmapsBySignificantBits.entrySet().stream()
+    return netsets.netmapsBySignificantBits.entrySet().stream()
       .anyMatch(entry ->
         entry.getValue().containsKey(SubNet.bitMaskFromIp(ip, entry.getKey()))
       );
@@ -48,55 +48,72 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   }
 
   Mono<Void> reload(Path... netsetPaths) throws ReloadException {
+    Netsets tempNetsets = new Netsets();
     for (Path netsetPath : netsetPaths) {
-      load(netsetPath);
+      tempNetsets.load(netsetPath);
     }
+    netsets = tempNetsets;
     log.info("Size after reload: {}", size());
     return Mono.empty();
   }
 
-  private void load(Path netsetPath) throws ReloadException {
-    try (Stream<String> lines = Files.lines(netsetPath)) {
-      lines
-        .map(String::trim)
-        .filter(s -> !s.startsWith("#"))
-        .forEach(this::add);
-    } catch (IOException e) {
-      throw new ReloadException(e);
-    }
-  }
-
   void add(String ipOrSubnet) {
-    if (SubNet.isSubnet(ipOrSubnet)) {
-      // Add to corresponding map as per number of significant bits
-      netmapForSignificantBits(ipOrSubnet).put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
-    } else {
-      ipset.add(ipOrSubnet);
-    }
-  }
-
-  private Map<String, String> netmapForSignificantBits(String subnet) {
-    return netmapForSignificantBits(SubNet.significantBits(subnet));
+    netsets.add(ipOrSubnet);
   }
 
   Map<String, String> netmapForSignificantBits(int significantBits) {
-    if (!netmapsBySignificantBits.containsKey(significantBits)) {
-      netmapsBySignificantBits.put(significantBits, new HashMap<>());
-    }
-    return netmapsBySignificantBits.get(significantBits);
+    return netsets.netmapForSignificantBits(significantBits);
   }
 
   int size() {
-    return ipset.size() + netmapsSize();
+    return netsets.ipset.size() + netmapsSize();
   }
 
   private int netmapsSize() {
-    return netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
+    return netsets.netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
   }
 
   @Override
   // Run initial load on application startup
   public void run(String... args) throws Exception {
     reload();
+  }
+
+  // A container to enable switching temp to active netsets on reload
+  static class Netsets {
+    Set<String> ipset = new HashSet<>();
+    Map<Integer, Map<String, String>> netmapsBySignificantBits = new TreeMap<>();
+
+    private void load(Path netsetPath) throws ReloadException {
+      try (Stream<String> lines = Files.lines(netsetPath)) {
+        lines
+          .map(String::trim)
+          .filter(s -> !s.startsWith("#"))
+          .forEach(this::add);
+      } catch (IOException e) {
+        throw new ReloadException(e);
+      }
+    }
+
+    void add(String ipOrSubnet) {
+      if (SubNet.isSubnet(ipOrSubnet)) {
+        // Add to corresponding map as per number of significant bits
+        netmapForSignificantBits(ipOrSubnet).put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), ipOrSubnet);
+      } else {
+        ipset.add(ipOrSubnet);
+      }
+    }
+
+    private Map<String, String> netmapForSignificantBits(String subnet) {
+      return netmapForSignificantBits(SubNet.significantBits(subnet));
+    }
+
+    Map<String, String> netmapForSignificantBits(int significantBits) {
+      if (!netmapsBySignificantBits.containsKey(significantBits)) {
+        netmapsBySignificantBits.put(significantBits, new HashMap<>());
+      }
+      return netmapsBySignificantBits.get(significantBits);
+    }
+
   }
 }
