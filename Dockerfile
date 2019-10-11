@@ -1,4 +1,4 @@
-FROM adoptopenjdk:11-jre-openj9
+FROM adoptopenjdk:11-jre-openj9-bionic
 
 RUN mkdir /opt/app
 COPY target/anomaly-detections-ip-0.0.0.jar /opt/app/app.jar
