@@ -66,14 +66,6 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
     }
   }
 
-  int size() {
-    return ipset.size() + netsetsSize();
-  }
-
-  private int netsetsSize() {
-    return netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
-  }
-
   void add(String ipOrSubnet) {
     if (SubNet.isSubnet(ipOrSubnet)) {
       // Add to corresponding map as per number of significant bits
@@ -92,6 +84,14 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
       netmapsBySignificantBits.put(significantBits, new HashMap<>());
     }
     return netmapsBySignificantBits.get(significantBits);
+  }
+
+  int size() {
+    return ipset.size() + netmapsSize();
+  }
+
+  private int netmapsSize() {
+    return netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
   }
 
   @Override
