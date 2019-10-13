@@ -13,7 +13,7 @@ npm install
 With debug log and monitoring file changes:
 
 ```sh
-DEBUG=anomaly-detections-ip:* npm run devstart
+DEBUG=test-ui:* npm run devstart
 ```
 
 Or:
