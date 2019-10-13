@@ -1,5 +1,8 @@
 package com.auth0.ipblacklist.controller;
 
+import com.auth0.ipblacklist.domain.BlacklistMetadata;
+import com.auth0.ipblacklist.domain.MatchResult;
+import com.auth0.ipblacklist.dto.PositiveResultMetadataDto;
 import com.auth0.ipblacklist.exception.ReloadException;
 import com.auth0.ipblacklist.service.IpBlacklistService;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +28,19 @@ public class IpBlacklistController {
   }
 
   @GetMapping("/ips/{ip}")
-  public Mono<ResponseEntity<String>> ips(@PathVariable String ip) {
+  public Mono<ResponseEntity<PositiveResultMetadataDto>> getIp(@PathVariable String ip) {
     log.debug("GET ip {}", ip);
 
     return ipBlacklistService.match(ip)
-      .flatMap(isBlacklisted -> isBlacklisted
-        ? Mono.just(ResponseEntity.ok().build())
+      .flatMap(matchResult -> matchResult.isBlacklisted()
+        ? Mono.just(ResponseEntity.ok(mapToDto(matchResult)))
         : Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT))
       );
+  }
+
+  private PositiveResultMetadataDto mapToDto(MatchResult matchResult) {
+    BlacklistMetadata metadata = matchResult.getMetadata();
+    return new PositiveResultMetadataDto(metadata.getBlacklist(), metadata.getIp(), metadata.getSubnet());
   }
 
   @PostMapping("/reload")

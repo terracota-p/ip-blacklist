@@ -79,11 +79,11 @@ public class IpSetInMemImplLoadTest {
   }
 
   private void positiveRequest() {
-    assertTrue(ipSet.match("5.63.151.233").block());
+    assertTrue(ipSet.match("5.63.151.233").block().isBlacklisted());
   }
 
   private void negativeRequest() {
-    assertFalse(ipSet.match("1.1.1.1").block());
+    assertFalse(ipSet.match("1.1.1.1").block().isBlacklisted());
   }
 
 }

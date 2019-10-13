@@ -24,29 +24,29 @@ public class IpSetInMemImplTest {
 
   @Test
   public void GivenSingleSubnet24Blacklisted_WhenMatches_ThenTrue() {
-    ipSet.add("31.11.43.0/24");
+    ipSet.add("31.11.43.0/24", "blacklist1");
 
-    Mono<Boolean> result = ipSet.match("31.11.43.233");
+    Mono<MatchResult> result = ipSet.match("31.11.43.233");
 
-    StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
   @Test
   public void GivenSingleSubnet16Blacklisted_WhenMatches_ThenTrue() {
-    ipSet.add("1.19.0.0/16");
+    ipSet.add("1.19.0.0/16", "blacklist1");
 
-    Mono<Boolean> result = ipSet.match("1.19.13.13");
+    Mono<MatchResult> result = ipSet.match("1.19.13.13");
 
-    StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
   @Test
   public void GivenSubnetsWithDifferentMasks_WhenAdded_ThenNetmapPopulated() {
-    ipSet.add("0.0.0.0/8");
-    ipSet.add("1.10.16.0/20");
-    ipSet.add("1.19.0.0/16");
-    ipSet.add("31.11.43.0/24");
-    ipSet.add("31.184.196.74/31");
+    ipSet.add("0.0.0.0/8", "blacklist");
+    ipSet.add("1.10.16.0/20", "blacklist");
+    ipSet.add("1.19.0.0/16", "blacklist");
+    ipSet.add("31.11.43.0/24", "blacklist");
+    ipSet.add("31.184.196.74/31", "blacklist");
 
     assertFalse(ipSet.netmapForSignificantBits(8).isEmpty());
     assertFalse(ipSet.netmapForSignificantBits(20).isEmpty());
@@ -61,27 +61,27 @@ public class IpSetInMemImplTest {
   public void GivenSmallNetset_AndIpBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.match("23.107.124.53");
+    Mono<MatchResult> result = ipSet.match("23.107.124.53");
 
-    StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
   @Test
   public void GivenSmallNetset_AndSubnetBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.match("31.11.43.233");
+    Mono<MatchResult> result = ipSet.match("31.11.43.233");
 
-    StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
   @Test
   public void GivenSmallNetset_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.match("1.1.1.1");
+    Mono<MatchResult> result = ipSet.match("1.1.1.1");
 
-    StepVerifier.create(result).expectNextMatches(b -> !b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(res -> !res.isBlacklisted()).verifyComplete();
   }
 
   @Test
@@ -115,9 +115,9 @@ public class IpSetInMemImplTest {
     ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
     ipSet.reload().block();
 
-    Mono<Boolean> result = ipSet.match("1.1.1.1");
+    Mono<MatchResult> result = ipSet.match("1.1.1.1");
 
-    StepVerifier.create(result).expectNextMatches(b -> !b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(res -> !res.isBlacklisted()).verifyComplete();
   }
 
   @Test
@@ -125,9 +125,9 @@ public class IpSetInMemImplTest {
     ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
     ipSet.reload().block();
 
-    Mono<Boolean> result = ipSet.match("5.63.151.233");
+    Mono<MatchResult> result = ipSet.match("5.63.151.233");
 
-    StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
+    StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
 }

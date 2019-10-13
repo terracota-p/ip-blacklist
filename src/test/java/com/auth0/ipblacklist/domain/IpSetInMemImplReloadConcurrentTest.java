@@ -74,7 +74,7 @@ public class IpSetInMemImplReloadConcurrentTest {
 
   private void positiveRequest() {
     try {
-      assertTrue("Expected positive, result was negative", ipSet.match("5.63.151.233").block());
+      assertTrue("Expected positive, result was negative", ipSet.match("5.63.151.233").block().isBlacklisted());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
