@@ -29,8 +29,15 @@ public class IpBlacklistApplicationTests {
   }
 
   @Test
-  public void WhenGetIp_GivenNotBlacklistedIp_ThenNoContent() {
+  public void GivenNotBlacklistedIp_WhenGetIp_ThenNoContent() {
     WebTestClient.ResponseSpec result = webClient.get().uri("http://localhost/ips/1.1.1.1").exchange();
     result.expectStatus().isNoContent();
+  }
+
+  @Test
+  public void GivenBlacklistedIp_WhenGetIp_ThenOk() {
+    // IP blacklisted by subnet in simple.netset:
+    WebTestClient.ResponseSpec result = webClient.get().uri("http://localhost/ips/31.11.43.13").exchange();
+    result.expectStatus().isOk();
   }
 }
