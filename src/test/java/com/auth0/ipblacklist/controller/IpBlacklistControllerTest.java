@@ -3,6 +3,7 @@ package com.auth0.ipblacklist.controller;
 import com.auth0.ipblacklist.domain.BlacklistMetadata;
 import com.auth0.ipblacklist.domain.MatchResult;
 import com.auth0.ipblacklist.dto.PositiveResultMetadataDto;
+import com.auth0.ipblacklist.mapper.BlacklistMetadataMapper;
 import com.auth0.ipblacklist.service.IpBlacklistService;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import static org.mockito.BDDMockito.mock;
 public class IpBlacklistControllerTest {
 
   private final IpBlacklistService ipBlacklistService = mock(IpBlacklistService.class);
-  private final IpBlacklistController controller = new IpBlacklistController(ipBlacklistService);
+  private final IpBlacklistController controller = new IpBlacklistController(ipBlacklistService, new BlacklistMetadataMapper());
 
   @Test
   public void GivenNotBlacklistedIp_WhenIps_ThenNoContent() {
