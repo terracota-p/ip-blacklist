@@ -4,3 +4,5 @@ Dockerfile
 .gitignore
 doc
 load-tests
+test-ui
+src
