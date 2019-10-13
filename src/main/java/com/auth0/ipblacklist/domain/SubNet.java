@@ -2,12 +2,12 @@ package com.auth0.ipblacklist.domain;
 
 import org.apache.commons.net.util.SubnetUtils;
 
-public class SubNet {
+class SubNet {
   public static String bitMaskOfSignificantBits(String subnet) {
     return bitMask(subnet, significantBits(subnet));
   }
 
-  public static String bitMask(String subnet, int significantBits) {
+  private static String bitMask(String subnet, int significantBits) {
     return binaryString32bits(subnet).substring(0, significantBits);
   }
 
@@ -17,7 +17,7 @@ public class SubNet {
   }
 
   public static int significantBits(String subnet) {
-    return Integer.valueOf(subnet.substring(subnet.indexOf("/") + 1));
+    return Integer.parseInt(subnet.substring(subnet.indexOf("/") + 1));
   }
 
   public static boolean isSubnet(String ipOrSubnet) {
