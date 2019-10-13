@@ -28,7 +28,7 @@ public class IpBlacklistController {
   public Mono<ResponseEntity<String>> ips(@PathVariable String ip) {
     log.debug("GET ip {}", ip);
 
-    return ipBlacklistService.isBlacklisted(ip)
+    return ipBlacklistService.match(ip)
       .flatMap(isBlacklisted -> isBlacklisted
         ? Mono.just(ResponseEntity.ok().build())
         : Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT))

@@ -12,8 +12,8 @@ public class IpBlacklistService {
 
   private final IpSet ipSet;
 
-  public Mono<Boolean> isBlacklisted(String ip) {
-    return ipSet.matches(ip);
+  public Mono<Boolean> match(String ip) {
+    return ipSet.match(ip);
   }
 
   public Mono<Void> reload() throws ReloadException {

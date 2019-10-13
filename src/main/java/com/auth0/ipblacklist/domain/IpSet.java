@@ -4,7 +4,7 @@ import com.auth0.ipblacklist.exception.ReloadException;
 import reactor.core.publisher.Mono;
 
 public interface IpSet {
-  Mono<Boolean> matches(String ip);
+  Mono<Boolean> match(String ip);
 
   Mono<Void> reload() throws ReloadException;
 }

@@ -28,7 +28,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   }
 
   @Override
-  public Mono<Boolean> matches(String ip) {
+  public Mono<Boolean> match(String ip) {
     return Mono.just(
       netsets.ipset.contains(ip) || anyNetmapMatches(ip)
     );

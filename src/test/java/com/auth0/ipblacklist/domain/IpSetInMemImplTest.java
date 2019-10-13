@@ -26,7 +26,7 @@ public class IpSetInMemImplTest {
   public void GivenSingleSubnet24Blacklisted_WhenMatches_ThenTrue() {
     ipSet.add("31.11.43.0/24");
 
-    Mono<Boolean> result = ipSet.matches("31.11.43.233");
+    Mono<Boolean> result = ipSet.match("31.11.43.233");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
@@ -35,7 +35,7 @@ public class IpSetInMemImplTest {
   public void GivenSingleSubnet16Blacklisted_WhenMatches_ThenTrue() {
     ipSet.add("1.19.0.0/16");
 
-    Mono<Boolean> result = ipSet.matches("1.19.13.13");
+    Mono<Boolean> result = ipSet.match("1.19.13.13");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
@@ -61,7 +61,7 @@ public class IpSetInMemImplTest {
   public void GivenSmallNetset_AndIpBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.matches("23.107.124.53");
+    Mono<Boolean> result = ipSet.match("23.107.124.53");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
@@ -70,7 +70,7 @@ public class IpSetInMemImplTest {
   public void GivenSmallNetset_AndSubnetBlacklisted_WhenMatches_ThenTrue() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.matches("31.11.43.233");
+    Mono<Boolean> result = ipSet.match("31.11.43.233");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }
@@ -79,7 +79,7 @@ public class IpSetInMemImplTest {
   public void GivenSmallNetset_AndIpNotBlacklisted_WhenMatches_ThenFalse() throws ReloadException {
     ipSet.reload(Paths.get("src/test/resources/simple.netset")).block();
 
-    Mono<Boolean> result = ipSet.matches("1.1.1.1");
+    Mono<Boolean> result = ipSet.match("1.1.1.1");
 
     StepVerifier.create(result).expectNextMatches(b -> !b).verifyComplete();
   }
@@ -115,7 +115,7 @@ public class IpSetInMemImplTest {
     ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
     ipSet.reload().block();
 
-    Mono<Boolean> result = ipSet.matches("1.1.1.1");
+    Mono<Boolean> result = ipSet.match("1.1.1.1");
 
     StepVerifier.create(result).expectNextMatches(b -> !b).verifyComplete();
   }
@@ -125,7 +125,7 @@ public class IpSetInMemImplTest {
     ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
     ipSet.reload().block();
 
-    Mono<Boolean> result = ipSet.matches("5.63.151.233");
+    Mono<Boolean> result = ipSet.match("5.63.151.233");
 
     StepVerifier.create(result).expectNextMatches(b -> b).verifyComplete();
   }

@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,11 +79,11 @@ public class IpSetInMemImplLoadTest {
   }
 
   private void positiveRequest() {
-    assertTrue(ipSet.matches("5.63.151.233").block());
+    assertTrue(ipSet.match("5.63.151.233").block());
   }
 
   private void negativeRequest() {
-    assertFalse(ipSet.matches("1.1.1.1").block());
+    assertFalse(ipSet.match("1.1.1.1").block());
   }
 
 }
