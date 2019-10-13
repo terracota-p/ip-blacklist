@@ -2,4 +2,18 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+  form(method='GET' action='')
+    div.form-group
+      label(for='ip') IP:
+      input#name.form-control(type='text', placeholder='1.1.1.1' name='ip' value=(undefined===ip ? '' : ip), required='true' )
+    button.btn.btn-primary(type='submit') Query
+
+  if blacklistedResult
+    p blacklist: #{blacklistedResult.blacklist}
+    if blacklistedResult.subnet
+      p subnet: #{blacklistedResult.subnet}
+    if blacklistedResult.ip
+      p IP: #{blacklistedResult.ip}
+
+  if error
+    p= error
