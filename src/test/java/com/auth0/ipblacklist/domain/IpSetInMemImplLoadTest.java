@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +23,7 @@ public class IpSetInMemImplLoadTest {
   private static final int CONCURRENT_REQUESTS_PER_PERIOD = 500;
   private static final long MS_BETWEEN_PERIODS = 100;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
-  private List<Long> latencies = Collections.synchronizedList(new ArrayList<>(PERIODS_TO_TEST * CONCURRENT_REQUESTS_PER_PERIOD));
+  private final List<Long> latencies = Collections.synchronizedList(new ArrayList<>(PERIODS_TO_TEST * CONCURRENT_REQUESTS_PER_PERIOD));
 
   @Test
   public void GivenBigNetset_WhenManyMatchesRequests_ThenLatencyBelowThreshold() throws ReloadException, InterruptedException {
@@ -80,11 +79,11 @@ public class IpSetInMemImplLoadTest {
   }
 
   private void positiveRequest() {
-    assertTrue(ipSet.matches("5.63.151.233").block());
+    assertTrue(ipSet.match("5.63.151.233").block().isBlacklisted());
   }
 
   private void negativeRequest() {
-    assertFalse(ipSet.matches("1.1.1.1").block());
+    assertFalse(ipSet.match("1.1.1.1").block().isBlacklisted());
   }
 
 }

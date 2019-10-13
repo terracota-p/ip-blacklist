@@ -3,7 +3,6 @@ package com.auth0.ipblacklist.util;
 import org.junit.Test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 

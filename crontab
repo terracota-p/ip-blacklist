@@ -1,0 +1,1 @@
+0 0 * * * /opt/blocklist-ipsets/ipsets-update-and-reload.sh >> /var/log/cron.log 2>&1

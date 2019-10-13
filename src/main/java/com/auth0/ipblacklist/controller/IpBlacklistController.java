@@ -1,10 +1,13 @@
 package com.auth0.ipblacklist.controller;
 
+import com.auth0.ipblacklist.dto.PositiveResultMetadataDto;
 import com.auth0.ipblacklist.exception.ReloadException;
+import com.auth0.ipblacklist.mapper.BlacklistMetadataMapper;
 import com.auth0.ipblacklist.service.IpBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,19 +21,20 @@ import reactor.core.publisher.Mono;
 public class IpBlacklistController {
 
   private final IpBlacklistService ipBlacklistService;
+  private final BlacklistMetadataMapper blacklistMetadataMapper;
 
   @GetMapping("/status")
   public Mono<Void> status() {
     return Mono.empty();
   }
 
-  @GetMapping("/ips/{ip}")
-  public Mono<ResponseEntity<String>> ips(@PathVariable String ip) {
+  @GetMapping(value = "/ips/{ip}", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<ResponseEntity<PositiveResultMetadataDto>> getIp(@PathVariable String ip) {
     log.debug("GET ip {}", ip);
 
-    return ipBlacklistService.isBlacklisted(ip)
-      .flatMap(isBlacklisted -> isBlacklisted
-        ? Mono.just(ResponseEntity.ok().build())
+    return ipBlacklistService.match(ip)
+      .flatMap(matchResult -> matchResult.isBlacklisted()
+        ? Mono.just(ResponseEntity.ok(blacklistMetadataMapper.toDto(matchResult)))
         : Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT))
       );
   }
