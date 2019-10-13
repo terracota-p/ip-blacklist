@@ -13,6 +13,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @AutoConfigureWebTestClient
 public class IpBlacklistApplicationTests {
 
+  @SuppressWarnings("unused")
   @Autowired
   private WebTestClient webClient;
 

@@ -23,7 +23,7 @@ public class IpSetInMemImplLoadTest {
   private static final int CONCURRENT_REQUESTS_PER_PERIOD = 500;
   private static final long MS_BETWEEN_PERIODS = 100;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
-  private List<Long> latencies = Collections.synchronizedList(new ArrayList<>(PERIODS_TO_TEST * CONCURRENT_REQUESTS_PER_PERIOD));
+  private final List<Long> latencies = Collections.synchronizedList(new ArrayList<>(PERIODS_TO_TEST * CONCURRENT_REQUESTS_PER_PERIOD));
 
   @Test
   public void GivenBigNetset_WhenManyMatchesRequests_ThenLatencyBelowThreshold() throws ReloadException, InterruptedException {

@@ -92,8 +92,8 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
   // A container to enable switching temp to active netsets on reload
   static class Netsets {
-    Map<String, BlacklistMetadata> ipset = new HashMap<>();
-    Map<Integer, Map<String, BlacklistMetadata>> netmapsBySignificantBits = new TreeMap<>();
+    final Map<String, BlacklistMetadata> ipset = new HashMap<>();
+    final Map<Integer, Map<String, BlacklistMetadata>> netmapsBySignificantBits = new TreeMap<>();
 
     private void load(Path netsetPath) throws ReloadException {
       String blacklistName = netsetPath.getFileName().toString();

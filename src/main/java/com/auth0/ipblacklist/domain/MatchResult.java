@@ -2,8 +2,6 @@ package com.auth0.ipblacklist.domain;
 
 import lombok.Getter;
 
-import java.util.Optional;
-
 public class MatchResult {
   @Getter
   private final boolean blacklisted;
