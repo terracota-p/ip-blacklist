@@ -29,28 +29,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
   @Override
   public Mono<MatchResult> match(String ip) {
-    Optional<BlacklistMetadata> metadata = Optional.ofNullable(netsets.ipset.get(ip));
-    if (metadata.isPresent()) {
-      return Mono.just(MatchResult.positive(metadata.get()));
-    }
-
-    metadata = anyNetmapMatches(ip);
-    if (metadata.isPresent()) {
-      return Mono.just(MatchResult.positive(metadata.get()));
-    }
-
-    return Mono.just(MatchResult.negative());
-  }
-
-  private Optional<BlacklistMetadata> anyNetmapMatches(String ip) {
-    Set<Map.Entry<Integer, Map<String, BlacklistMetadata>>> entries = netsets.netmapsBySignificantBits.entrySet();
-    for (Map.Entry<Integer, Map<String, BlacklistMetadata>> entry : entries) {
-      BlacklistMetadata blacklistMetadata = entry.getValue().get(SubNet.bitMaskFromIp(ip, entry.getKey()));
-      if (blacklistMetadata != null) {
-        return Optional.of(blacklistMetadata);
-      }
-    }
-    return Optional.empty();
+    return netsets.match(ip);
   }
 
   @Override
@@ -77,11 +56,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
   }
 
   int size() {
-    return netsets.ipset.size() + netmapsSize();
-  }
-
-  private int netmapsSize() {
-    return netsets.netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
+    return netsets.size();
   }
 
   @Override
@@ -125,6 +100,39 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
         netmapsBySignificantBits.put(significantBits, new HashMap<>());
       }
       return netmapsBySignificantBits.get(significantBits);
+    }
+
+    Mono<MatchResult> match(String ip) {
+      Optional<BlacklistMetadata> metadata = Optional.ofNullable(ipset.get(ip));
+      if (metadata.isPresent()) {
+        return Mono.just(MatchResult.positive(metadata.get()));
+      }
+
+      metadata = anyNetmapMatches(ip);
+      if (metadata.isPresent()) {
+        return Mono.just(MatchResult.positive(metadata.get()));
+      }
+
+      return Mono.just(MatchResult.negative());
+    }
+
+    private Optional<BlacklistMetadata> anyNetmapMatches(String ip) {
+      Set<Map.Entry<Integer, Map<String, BlacklistMetadata>>> entries = netmapsBySignificantBits.entrySet();
+      for (Map.Entry<Integer, Map<String, BlacklistMetadata>> entry : entries) {
+        BlacklistMetadata blacklistMetadata = entry.getValue().get(SubNet.bitMaskFromIp(ip, entry.getKey()));
+        if (blacklistMetadata != null) {
+          return Optional.of(blacklistMetadata);
+        }
+      }
+      return Optional.empty();
+    }
+
+    int size() {
+      return ipset.size() + netmapsSize();
+    }
+
+    private int netmapsSize() {
+      return netmapsBySignificantBits.values().stream().map(Map::size).reduce(Integer::sum).orElse(0);
     }
 
   }
