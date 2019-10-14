@@ -21,7 +21,7 @@ block content
           div IP: #{blacklistedResult.ip}
     else if goodResult
       div(class='alert alert-success')
-        div This IP is GOOD
+        div This IP is not blacklisted
 
     if error
       div(class='alert alert-danger')= error
