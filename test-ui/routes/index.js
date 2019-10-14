@@ -13,7 +13,8 @@ router.get("/", async function(req, res) {
       res.render("index", {
         title: "anomaly-detections-ip - " + ip,
         ip: ip,
-        blacklistedResult: blacklistedResult
+        blacklistedResult: blacklistedResult,
+        goodResult: !blacklistedResult
       });
     } catch (err) {
       res.render("index", {

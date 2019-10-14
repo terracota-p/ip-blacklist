@@ -7,16 +7,21 @@ block content
       div.row
         div.col
           div.form-group
-            input#name.form-control(type='text', placeholder='1.1.1.1' name='ip' value=(undefined===ip ? '' : ip), required='true' )
+            input#name.form-control(type='text', placeholder='Type an IP, eg: 1.1.1.1' name='ip' value=(undefined===ip ? '' : ip), required='true' )
         div.col-md-auto
           button.btn.btn-primary(type='submit') Query
 
     if blacklistedResult
-      p blacklist: #{blacklistedResult.blacklist}
-      if blacklistedResult.subnet
-        p subnet: #{blacklistedResult.subnet}
-      if blacklistedResult.ip
-        p IP: #{blacklistedResult.ip}
+      div(class='alert alert-danger')
+        div This IP is BLACKLISTED
+        div blacklist: #{blacklistedResult.blacklist}
+        if blacklistedResult.subnet
+          div subnet: #{blacklistedResult.subnet}
+        if blacklistedResult.ip
+          div IP: #{blacklistedResult.ip}
+    else if goodResult
+      div(class='alert alert-success')
+        div This IP is GOOD
 
     if error
       p= error
