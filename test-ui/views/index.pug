@@ -12,7 +12,7 @@ block content
           button.btn.btn-primary(type='submit') Query
 
     if blacklistedResult
-      div(class='alert alert-danger')
+      div(class='alert alert-dark')
         div This IP is BLACKLISTED
         div blacklist: #{blacklistedResult.blacklist}
         if blacklistedResult.subnet
