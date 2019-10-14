@@ -3,6 +3,7 @@ package com.auth0.ipblacklist.controller;
 import com.auth0.ipblacklist.domain.BlacklistMetadata;
 import com.auth0.ipblacklist.domain.MatchResult;
 import com.auth0.ipblacklist.dto.PositiveResultMetadataDto;
+import com.auth0.ipblacklist.exception.ValidationException;
 import com.auth0.ipblacklist.mapper.BlacklistMetadataMapper;
 import com.auth0.ipblacklist.service.IpBlacklistService;
 import org.junit.Test;
@@ -19,7 +20,7 @@ public class IpBlacklistControllerTest {
   private final IpBlacklistController controller = new IpBlacklistController(ipBlacklistService, new BlacklistMetadataMapper());
 
   @Test
-  public void GivenNotBlacklistedIp_WhenIps_ThenNoContent() {
+  public void GivenNotBlacklistedIp_WhenGet_ThenNoContent() throws ValidationException {
     String ip = "1.1.1.1";
     given(ipBlacklistService.match(ip)).willReturn(Mono.just(MatchResult.negative()));
 
@@ -29,7 +30,7 @@ public class IpBlacklistControllerTest {
   }
 
   @Test
-  public void GivenBlacklistedIp_WhenGetIp_ThenOk_AndMetadata() {
+  public void GivenBlacklistedIp_WhenGetIp_ThenOk_AndMetadata() throws ValidationException {
     String ip = "5.9.253.173";
     String blacklist = "firehol_level1.netset";
     given(ipBlacklistService.match(ip)).willReturn(Mono.just(MatchResult.positive(BlacklistMetadata.ofIp(ip, blacklist))));
@@ -40,7 +41,7 @@ public class IpBlacklistControllerTest {
   }
 
   @Test
-  public void GivenBlacklistedIpBySubnet_WhenGetIp_ThenOk_AndMetadata() {
+  public void GivenBlacklistedIpBySubnet_WhenGetIp_ThenOk_AndMetadata() throws ValidationException {
     String ip = "31.11.43.13";
     String subnet = "31.11.43.0/24";
     String blacklist = "firehol_level1.netset";
@@ -49,5 +50,10 @@ public class IpBlacklistControllerTest {
     Mono<ResponseEntity<PositiveResultMetadataDto>> result = controller.getIp(ip);
 
     StepVerifier.create(result).expectNext(ResponseEntity.ok(new PositiveResultMetadataDto(blacklist, null, subnet)));
+  }
+
+  @Test(expected = ValidationException.class)
+  public void WhenGetIpWithBadFormat_ThenValidationException() throws ValidationException {
+    controller.getIp("bad-formatted-ip").subscribe();
   }
 }
