@@ -4,10 +4,10 @@ const fetch = require("node-fetch");
 
 /* GET home page. */
 router.get("/", async function(req, res) {
-  if (!req.query.ip) {
+  const ip = req.query.ip;
+  if (!ip) {
     res.render("index", {});
   } else {
-    const ip = req.query.ip;
     try {
       const blacklistedResult = await fetchIp(ip);
       res.render("index", {
