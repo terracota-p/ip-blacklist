@@ -5,20 +5,18 @@ const fetch = require("node-fetch");
 /* GET home page. */
 router.get("/", async function(req, res) {
   if (!req.query.ip) {
-    res.render("index", { title: "anomaly-detections-ip" });
+    res.render("index", {});
   } else {
     const ip = req.query.ip;
     try {
       const blacklistedResult = await fetchIp(ip);
       res.render("index", {
-        title: "anomaly-detections-ip - " + ip,
         ip: ip,
         blacklistedResult: blacklistedResult,
         goodResult: !blacklistedResult
       });
     } catch (err) {
       res.render("index", {
-        title: "anomaly-detections-ip - " + ip,
         ip: ip,
         error: err.message
       });
