@@ -60,4 +60,12 @@ public class IpBlacklistApplicationTests {
     result.expectStatus().isOk();
     result.expectBody().json("{\"blacklist\": \"simple.netset\", \"subnet\":\"31.11.43.0/24\"}");
   }
+
+  @Test
+  public void WhenGetIpWithBadFormat_ThenBadRequest() {
+    WebTestClient.ResponseSpec result = webClient.get().uri("http://localhost/ips/bad-formatted-ip").exchange();
+
+    result.expectStatus().isBadRequest();
+    result.expectStatus().reasonEquals("Bad Request");
+  }
 }

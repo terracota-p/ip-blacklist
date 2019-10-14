@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  div.container
+    h1 anomaly-detections-ip
+    form(method='GET' action='')
+      div.row
+        div.col
+          div.form-group
+            input#name.form-control(type='text', placeholder='Type an IP, eg: 1.1.1.1' name='ip' value=(undefined===ip ? '' : ip), required='true' )
+        div.col-md-auto
+          button.btn.btn-primary(type='submit') Query
+
+    if blacklistedResult
+      div(class='alert alert-dark')
+        div This IP is BLACKLISTED
+        div blacklist: #{blacklistedResult.blacklist}
+        if blacklistedResult.subnet
+          div subnet: #{blacklistedResult.subnet}
+        if blacklistedResult.ip
+          div IP: #{blacklistedResult.ip}
+    else if goodResult
+      div(class='alert alert-success')
+        div This IP is GOOD
+
+    if error
+      div(class='alert alert-danger')= error
