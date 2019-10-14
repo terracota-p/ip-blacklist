@@ -130,4 +130,13 @@ public class IpSetInMemImplTest {
     StepVerifier.create(result).expectNextMatches(MatchResult::isBlacklisted).verifyComplete();
   }
 
+  @Test
+  public void GivenNetsetWithSubnets_WhenMatchesInvalidInetaddress_ThenFalse() throws ReloadException {
+    ipSet.reload(Paths.get("src/test/resources/firehol_level1.netset")).block();
+
+    Mono<MatchResult> result = ipSet.match("999.999.999.999");
+
+    StepVerifier.create(result).expectNextMatches(res -> !res.isBlacklisted()).verifyComplete();
+  }
+
 }

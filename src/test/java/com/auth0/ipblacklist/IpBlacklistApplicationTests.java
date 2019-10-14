@@ -62,10 +62,9 @@ public class IpBlacklistApplicationTests {
   }
 
   @Test
-  public void WhenGetIpWithBadFormat_ThenBadRequest() {
+  public void WhenGetIpWithBadFormat_ThenNoContent() {
     WebTestClient.ResponseSpec result = webClient.get().uri("http://localhost/ips/bad-formatted-ip").exchange();
 
-    result.expectStatus().isBadRequest();
-    result.expectStatus().reasonEquals("Bad Request");
+    result.expectStatus().isNoContent();
   }
 }

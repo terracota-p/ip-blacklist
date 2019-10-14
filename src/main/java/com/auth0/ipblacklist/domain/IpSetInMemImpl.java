@@ -1,5 +1,6 @@
 package com.auth0.ipblacklist.domain;
 
+import com.auth0.ipblacklist.exception.InvalidIpv4Exception;
 import com.auth0.ipblacklist.exception.ReloadException;
 import com.auth0.ipblacklist.util.CommaSeparatedPathList;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -77,22 +77,27 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
           .map(String::trim)
           .filter(line -> !line.startsWith("#"))
           .forEach(ipOrSubnet -> add(ipOrSubnet, blacklistName));
-      } catch (IOException e) {
+      } catch (Exception e) {
         throw new ReloadException(e);
       }
     }
 
     void add(String ipOrSubnet, String blacklistName) {
-      if (SubNet.isSubnet(ipOrSubnet)) {
-        // Add to corresponding map as per number of significant bits
-        netmapForSignificantBits(ipOrSubnet).put(SubNet.bitMaskOfSignificantBits(ipOrSubnet), BlacklistMetadata.ofSubnet(ipOrSubnet, blacklistName));
-      } else {
-        ipset.put(ipOrSubnet, BlacklistMetadata.ofIp(ipOrSubnet, blacklistName));
+      try {
+        if (Ipv4CidrUtil.isSubnet(ipOrSubnet)) {
+          // Add to corresponding map as per number of significant bits
+          netmapForSignificantBits(ipOrSubnet).put(Ipv4CidrUtil.bitMaskOfSignificantBits(ipOrSubnet), BlacklistMetadata.ofSubnet(ipOrSubnet, blacklistName));
+        } else {
+          ipset.put(ipOrSubnet, BlacklistMetadata.ofIp(ipOrSubnet, blacklistName));
+        }
+      } catch (InvalidIpv4Exception e) {
+        // Throw unchecked exception to allow add() being called in java streams forEach()
+        throw new RuntimeException(e);
       }
     }
 
     private Map<String, BlacklistMetadata> netmapForSignificantBits(String subnet) {
-      return netmapForSignificantBits(SubNet.significantBits(subnet));
+      return netmapForSignificantBits(Ipv4CidrUtil.significantBits(subnet));
     }
 
     Map<String, BlacklistMetadata> netmapForSignificantBits(int significantBits) {
@@ -118,13 +123,17 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
 
     private Optional<BlacklistMetadata> anyNetmapMatches(String ip) {
       Set<Map.Entry<Integer, Map<String, BlacklistMetadata>>> entries = netmapsBySignificantBits.entrySet();
-      for (Map.Entry<Integer, Map<String, BlacklistMetadata>> entry : entries) {
-        BlacklistMetadata blacklistMetadata = entry.getValue().get(SubNet.bitMaskFromIp(ip, entry.getKey()));
-        if (blacklistMetadata != null) {
-          return Optional.of(blacklistMetadata);
+      try {
+        for (Map.Entry<Integer, Map<String, BlacklistMetadata>> entry : entries) {
+          BlacklistMetadata blacklistMetadata = entry.getValue().get(Ipv4CidrUtil.bitMaskFromIp(ip, entry.getKey()));
+          if (blacklistMetadata != null) {
+            return Optional.of(blacklistMetadata);
+          }
         }
+        return Optional.empty();
+      } catch (InvalidIpv4Exception e) {
+        return Optional.empty();
       }
-      return Optional.empty();
     }
 
     int size() {

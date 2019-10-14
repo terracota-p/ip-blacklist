@@ -2,7 +2,6 @@ package com.auth0.ipblacklist.controller;
 
 import com.auth0.ipblacklist.dto.PositiveResultMetadataDto;
 import com.auth0.ipblacklist.exception.ReloadException;
-import com.auth0.ipblacklist.exception.ValidationException;
 import com.auth0.ipblacklist.mapper.BlacklistMetadataMapper;
 import com.auth0.ipblacklist.service.IpBlacklistService;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-
-import static com.auth0.ipblacklist.util.IpValidator.validate;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,8 +29,7 @@ public class IpBlacklistController {
   }
 
   @GetMapping(value = "/ips/{ip}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Mono<ResponseEntity<PositiveResultMetadataDto>> getIp(@PathVariable String ip) throws ValidationException {
-    validate(ip);
+  public Mono<ResponseEntity<PositiveResultMetadataDto>> getIp(@PathVariable String ip) {
     log.debug("GET ip {}", ip);
 
     return ipBlacklistService.match(ip)
@@ -52,10 +51,4 @@ public class IpBlacklistController {
     }
   }
 
-  @ExceptionHandler
-  public ResponseEntity<String> handle(ValidationException ex) {
-    log.warn(ex.getMessage());
-    log.debug(ex.getMessage(), ex);
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-  }
 }
