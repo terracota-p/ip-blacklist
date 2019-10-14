@@ -2,7 +2,12 @@ package com.auth0.ipblacklist.util;
 
 import com.auth0.ipblacklist.exception.ValidationException;
 
+// We don't need a full IP validator, basic input format validation is enough for the purpose of querying the ipsets
 public class IpValidator {
+
+  private IpValidator() {
+  }
+
   public static void validate(String ip) throws ValidationException {
     if (ip == null || ip.isBlank()) {
       throw new ValidationException("IP cannot be blank: " + ip);
