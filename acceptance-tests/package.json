@@ -5,11 +5,15 @@
   "description": "Acceptance tests for anomaly-detections-ip",
   "dependencies": {
     "apickli": "^2.3.3",
-    "cucumber": "^5.1.0"
+    "async": "^3.1.0",
+    "cucumber": "^5.1.0",
+    "random-ip": "0.0.1",
+    "request-promise": "^4.2.4"
   },
   "scripts": {
     "init": "npm install",
     "test": "cucumber-js",
-    "report": "node generate-report.js"
+    "report": "node generate-report.js",
+    "debug": "node --inspect-brk ./node_modules/.bin/cucumber-js"
   }
 }

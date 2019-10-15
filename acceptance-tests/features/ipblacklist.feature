@@ -16,3 +16,7 @@ Feature: IP Blacklist
     Then response code should be 200
     And response body path $.blacklist should be firehol_level1.netset
     And response body path $.subnet should be 0.0.0.0/8
+
+  Scenario: Low latency under load
+    When I send 2000 requests to get IP
+    Then maximum latency is below 200 ms and average latency is below 50 ms
