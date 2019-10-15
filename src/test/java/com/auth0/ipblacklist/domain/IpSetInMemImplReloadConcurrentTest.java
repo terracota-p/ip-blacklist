@@ -61,9 +61,10 @@ public class IpSetInMemImplReloadConcurrentTest {
     });
     reloadThread.start();
 
-    boolean allThreadsReachedFinishLine = finishLine.await(5, TimeUnit.SECONDS);
+    int maxTotalSeconds = 5;
+    boolean allThreadsReachedFinishLine = finishLine.await(maxTotalSeconds, TimeUnit.SECONDS);
     if (!allThreadsReachedFinishLine) {
-      fail("some concurrent request did not finish");
+      fail("some concurrent request did not finish within " + maxTotalSeconds + "s");
     }
 
     boolean reloadThreadReachedFinishLine = reloadFinishLine.await(1, TimeUnit.SECONDS);
