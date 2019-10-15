@@ -1,26 +1,34 @@
 const async = require("async");
-const fetch = require("node-fetch");
+const rp = require("request-promise");
 
-const requests = 1000;
+const requests = 2000;
 const urls = Array(requests).fill("http://localhost:8080/ips/" + randomIp());
 const overallStartTime = new Date().getTime();
 async.mapLimit(
   urls,
   5,
   async function(url) {
-    const startTime = new Date().getTime();
-    const response = await fetch(url);
-    response.elapsedTime = new Date().getTime() - startTime;
-    return response;
+    var response;
+    var options = {
+      method: "GET",
+      uri: url,
+      resolveWithFullResponse: true,
+      time: true
+    };
+    return rp(options)
+      .then(response => response)
+      .catch(err => {
+        throw err;
+      });
   },
   (err, results) => {
     if (err) throw err;
-    // results is now an array of the response bodies
+    // results is now an array of the responses
 
     const overallTime = new Date().getTime() - overallStartTime;
 
     const requestsWithUnexpectedStatus = results.filter(
-      response => response.status !== 200 && response.status !== 204
+      response => response.statusCode !== 200 && response.statusCode !== 204
     );
     const requestsOverMaxThreshold = results.filter(
       response => response.elapsedTime > 200
@@ -30,7 +38,7 @@ async.mapLimit(
         .map(response => response.elapsedTime)
         .reduce((accumulator, value) => accumulator + value) / requests;
 
-    console.log("averageLatency: " + averageLatency + "ms");
+    console.log("average latency: " + averageLatency + "ms");
     console.log(
       "max latency: " +
         results
@@ -42,6 +50,7 @@ async.mapLimit(
     );
     const requestsPerSecond = (requests * 1000) / overallTime;
     console.log("Rate: " + Math.ceil(requestsPerSecond) + " requests/s");
+    console.log("Total requests processed: " + requests);
 
     if (results.length !== requests) {
       throw new Error(requests - results.length + "requests did not finish.");
