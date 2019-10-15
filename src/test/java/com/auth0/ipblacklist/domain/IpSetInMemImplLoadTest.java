@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 public class IpSetInMemImplLoadTest {
   private static final int REQUESTS_PER_SECOND = 5000;
   private static final int TOTAL_REQUESTS = 25000;
+  private static final int MAX_TOTAL_SECONDS = 10;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
   private final RateLimiter rateLimiter = RateLimiter.create(REQUESTS_PER_SECOND);
   private final List<Long> latencies = Collections.synchronizedList(new ArrayList<>(TOTAL_REQUESTS));
@@ -77,10 +78,9 @@ public class IpSetInMemImplLoadTest {
   }
 
   private void waitUntilRequestsFinished() throws InterruptedException {
-    int maxTotalSeconds = 10;
-    boolean allThreadsReachedFinishLine = finishLine.await(maxTotalSeconds, TimeUnit.SECONDS);
+    boolean allThreadsReachedFinishLine = finishLine.await(MAX_TOTAL_SECONDS, TimeUnit.SECONDS);
     if (!allThreadsReachedFinishLine) {
-      fail("some request did not finish within " + maxTotalSeconds + "s");
+      fail("some request did not finish within " + MAX_TOTAL_SECONDS + "s");
     }
   }
 
