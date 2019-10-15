@@ -5,7 +5,9 @@
   "description": "Acceptance tests for anomaly-detections-ip",
   "dependencies": {
     "apickli": "^2.3.3",
-    "cucumber": "^5.1.0"
+    "async": "^3.1.0",
+    "cucumber": "^5.1.0",
+    "node-fetch": "^2.6.0"
   },
   "scripts": {
     "init": "npm install",
