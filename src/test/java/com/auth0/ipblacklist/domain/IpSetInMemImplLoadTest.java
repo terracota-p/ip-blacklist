@@ -40,7 +40,7 @@ public class IpSetInMemImplLoadTest {
     checkAverageLatencyAndPrintInfo(totalTime);
   }
 
-  private void sendRequests() throws InterruptedException {
+  private void sendRequests() {
     Runnable task = () -> {
       long start = System.currentTimeMillis();
       positiveOrNegativeRequest();
@@ -69,11 +69,11 @@ public class IpSetInMemImplLoadTest {
   }
 
   private void positiveRequest() {
-    assertTrue(ipSet.match("5.63.151.233").block().isBlacklisted());
+    assertTrue(ipSet.match("5.63.151.233").blockOptional().orElseThrow().isBlacklisted());
   }
 
   private void negativeRequest() {
-    assertFalse(ipSet.match("1.1.1.1").block().isBlacklisted());
+    assertFalse(ipSet.match("1.1.1.1").blockOptional().orElseThrow().isBlacklisted());
   }
 
   private void waitUntilRequestsFinished() throws InterruptedException {
