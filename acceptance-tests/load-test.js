@@ -1,8 +1,11 @@
 const async = require("async");
 const rp = require("request-promise");
+const randomip = require("random-ip");
 
 const requests = 2000;
-const urls = Array(requests).fill("http://localhost:8080/ips/" + randomIp());
+const urls = Array(requests)
+  .fill(0)
+  .map(value => "http://localhost:8080/ips/" + randomIp());
 const overallStartTime = new Date().getTime();
 async.mapLimit(
   urls,
@@ -31,10 +34,18 @@ async.mapLimit(
     const {
       averageLatency,
       requestsWithUnexpectedStatus,
-      requestsOverMaxThreshold
+      requestsOverMaxThreshold,
+      positives,
+      negatives
     } = aggregateResults(results);
 
-    printResultsSummary(averageLatency, results, requestsPerSecond);
+    printResultsSummary(
+      averageLatency,
+      results,
+      requestsPerSecond,
+      positives,
+      negatives
+    );
 
     checkResults(
       results,
@@ -47,7 +58,7 @@ async.mapLimit(
 );
 
 function randomIp() {
-  return "0.0.0.0";
+  return randomip("0.0.0.0", 0);
 }
 
 function aggregateResults(results) {
@@ -61,14 +72,26 @@ function aggregateResults(results) {
     results
       .map(response => response.elapsedTime)
       .reduce((accumulator, value) => accumulator + value) / requests;
+  const positives = results.filter(response => response.statusCode === 200)
+    .length;
+  const negatives = results.filter(response => response.statusCode === 204)
+    .length;
   return {
     averageLatency,
     requestsWithUnexpectedStatus,
-    requestsOverMaxThreshold
+    requestsOverMaxThreshold,
+    positives,
+    negatives
   };
 }
 
-function printResultsSummary(averageLatency, results, requestsPerSecond) {
+function printResultsSummary(
+  averageLatency,
+  results,
+  requestsPerSecond,
+  positives,
+  negatives
+) {
   console.log("average latency: " + averageLatency + "ms");
   console.log(
     "max latency: " +
@@ -80,7 +103,15 @@ function printResultsSummary(averageLatency, results, requestsPerSecond) {
       "ms"
   );
   console.log("Rate: " + Math.ceil(requestsPerSecond) + " requests/s");
-  console.log("Total requests processed: " + requests);
+  console.log(
+    "Total requests processed: " +
+      requests +
+      " (" +
+      positives +
+      " blacklisted, " +
+      negatives +
+      " not blacklisted)"
+  );
 }
 
 function checkResults(
