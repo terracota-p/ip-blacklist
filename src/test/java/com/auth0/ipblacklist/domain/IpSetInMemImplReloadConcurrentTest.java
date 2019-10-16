@@ -25,6 +25,7 @@ public class IpSetInMemImplReloadConcurrentTest {
   private static final int TOTAL_REQUESTS = 10000;
   private static final int MAX_TOTAL_SECONDS = 5;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+  @SuppressWarnings("UnstableApiUsage")
   private final RateLimiter rateLimiter = RateLimiter.create(REQUESTS_PER_SECOND);
   private final CountDownLatch finishLine = new CountDownLatch(TOTAL_REQUESTS);
 

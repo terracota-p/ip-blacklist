@@ -46,3 +46,14 @@ export NETSETPATH=./src/test/resources/firehol_level1.netset,./src/test/resource
   && java -jar target/anomaly-detections-ip-0.0.0.jar
 ```
 
+## Acceptance tests
+
+See [acceptance-tests](./acceptance-tests/README.md)
+
+## Load tests
+
+See [load-tests](./load-tests/README.md)
+
+## Test UI
+
+See [test-ui](./test-ui/README.md)

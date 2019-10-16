@@ -24,6 +24,7 @@ public class IpSetInMemImplLoadTest {
   private static final int TOTAL_REQUESTS = 25000;
   private static final int MAX_TOTAL_SECONDS = 10;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+  @SuppressWarnings("UnstableApiUsage")
   private final RateLimiter rateLimiter = RateLimiter.create(REQUESTS_PER_SECOND);
   private final List<Long> latencies = Collections.synchronizedList(new ArrayList<>(TOTAL_REQUESTS));
   private final CountDownLatch finishLine = new CountDownLatch(TOTAL_REQUESTS);
