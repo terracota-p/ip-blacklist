@@ -141,10 +141,9 @@ function checkResults(aggregatedResults) {
         ")"
     );
   }
-  // Desired throughput would be ~770, but that was too restrictive for consistent green result right after startup.
-  // 330 consistently works, and is reasonable given that the main purpose of this test is measure latency, and in prod we'd
-  // probably want 3 service instances (for high availability), that would yield ~1000 req/s min throughput right after startup.
-  if (requestsPerSecond < 330) {
+  // Don't be too restrictive on achieved throughput, for consistent green results right after startup (the main purpose of this test is measure latency).
+  const MIN_REQUIRED_THROUGHPUT = 330;
+  if (requestsPerSecond < MIN_REQUIRED_THROUGHPUT) {
     throw new Error(
       "Could not match desired rate of at least 330 requests/s: " +
         requestsPerSecond
