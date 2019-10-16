@@ -1,4 +1,4 @@
 #!/bin/sh
 
-/opt/blocklist-ipsets/ipsets-update.sh
+update-ipsets
 curl -X POST localhost:8080/reload

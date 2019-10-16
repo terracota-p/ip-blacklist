@@ -1,4 +1,4 @@
 #!/bin/sh
 
-/opt/blocklist-ipsets/ipsets-update.sh
+update-ipsets
 cron && java -jar /opt/app/app.jar

@@ -13,9 +13,12 @@ RUN mkdir /opt/blocklist-ipsets \
     && touch /opt/blocklist-ipsets/firehol_level2.netset
 ENV NETSETPATH /opt/blocklist-ipsets/firehol_level1.netset,/opt/blocklist-ipsets/firehol_level2.netset
 
+# Install FireHOL's update-ipsets
+COPY install-update-ipsets.sh /opt/update-ipsets/
+RUN /opt/update-ipsets/install-update-ipsets.sh
+
 # Setup cron reload script
 COPY ipsets-update-and-reload.sh /opt/blocklist-ipsets/
-COPY ipsets-update.sh /opt/blocklist-ipsets/
 COPY crontab /etc/cron.d/ipsets-update-and-reload-cron
 RUN crontab /etc/cron.d/ipsets-update-and-reload-cron
 
