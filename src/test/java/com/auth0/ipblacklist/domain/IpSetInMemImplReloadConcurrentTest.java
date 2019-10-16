@@ -1,15 +1,19 @@
 package com.auth0.ipblacklist.domain;
 
 import com.auth0.ipblacklist.exception.ReloadException;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -17,36 +21,28 @@ import static org.junit.Assert.fail;
 @Slf4j
 public class IpSetInMemImplReloadConcurrentTest {
 
-  private static final int PERIODS_TO_TEST = 20;
-  private static final int CONCURRENT_REQUESTS_PER_PERIOD = 5;
-  private static final long MS_BETWEEN_PERIODS = 1;
+  private static final int REQUESTS_PER_SECOND = 5000;
+  private static final int TOTAL_REQUESTS = 10000;
+  private static final int MAX_TOTAL_SECONDS = 5;
   private final IpSetInMemImpl ipSet = new IpSetInMemImpl("src/test/resources/firehol_level1.netset,src/test/resources/firehol_level2.netset");
+  private final RateLimiter rateLimiter = RateLimiter.create(REQUESTS_PER_SECOND);
+  private final CountDownLatch finishLine = new CountDownLatch(TOTAL_REQUESTS);
 
   @Test
   public void GivenBigNetset_WhenReload_AndConcurrentQueries_ThenPositivesStillIdentified() throws ReloadException, InterruptedException {
     ipSet.reload().block();
 
-    concurrentQueriesExpectedPositive();
+    sendQueriesAndReloadsAndCheckIsPositive();
   }
 
-  private void concurrentQueriesExpectedPositive() throws InterruptedException {
-    CountDownLatch finishLine = new CountDownLatch(CONCURRENT_REQUESTS_PER_PERIOD);
+  private void sendQueriesAndReloadsAndCheckIsPositive() throws InterruptedException {
+    Runnable queryTask = () -> {
+      positiveRequest();
+      finishLine.countDown();
+    };
+    submitTasks(Collections.nCopies(TOTAL_REQUESTS, queryTask), Executors.newFixedThreadPool(8));
 
-    // concurrent queries
-    for (int j = 0; j < CONCURRENT_REQUESTS_PER_PERIOD; j++) {
-      Thread queryThread = new Thread(() -> {
-        for (int i = 0; i < PERIODS_TO_TEST; i++) {
-          long start = System.currentTimeMillis();
-          positiveRequest();
-          await().until(() -> System.currentTimeMillis() > start + MS_BETWEEN_PERIODS);
-        }
-
-        finishLine.countDown();
-      });
-      queryThread.start();
-    }
-
-    // concurrent reloads
+    // concurrent reloads while the test runs
     CountDownLatch reloadFinishLine = new CountDownLatch(1);
     Thread reloadThread = new Thread(() -> {
       while (finishLine.getCount() > 0) {
@@ -61,9 +57,9 @@ public class IpSetInMemImplReloadConcurrentTest {
     });
     reloadThread.start();
 
-    boolean allThreadsReachedFinishLine = finishLine.await(5, TimeUnit.SECONDS);
+    boolean allThreadsReachedFinishLine = finishLine.await(MAX_TOTAL_SECONDS, TimeUnit.SECONDS);
     if (!allThreadsReachedFinishLine) {
-      fail("some concurrent request did not finish");
+      fail("some concurrent request did not finish within " + MAX_TOTAL_SECONDS + "s");
     }
 
     boolean reloadThreadReachedFinishLine = reloadFinishLine.await(1, TimeUnit.SECONDS);
@@ -74,10 +70,17 @@ public class IpSetInMemImplReloadConcurrentTest {
 
   private void positiveRequest() {
     try {
-      assertTrue("Expected positive, result was negative", ipSet.match("5.63.151.233").block().isBlacklisted());
+      assertTrue("Expected positive, result was negative", ipSet.match("5.63.151.233").blockOptional().orElseThrow().isBlacklisted());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    }
+  }
+
+  private void submitTasks(List<Runnable> tasks, Executor executor) {
+    for (Runnable task : tasks) {
+      rateLimiter.acquire();
+      executor.execute(task);
     }
   }
 
