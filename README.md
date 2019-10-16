@@ -64,6 +64,7 @@ Before going to prod, we should think about:
 - Deployment - For instance we could use k8s, then create the configmaps
 - Horizontal scalability, high availability - Deploy 3 instances at least, with a load-balancer at the front (eg: you can do that with an nginx ingress in k8s)
 - Frequent update interval - Eg: cron every 5 mins: update-ipsets downloads from maintainers (that update frequently, as opposed to the git repo that updates once a day), and can be run as frequently as we want (each list has a max frequency allowed and it respects it, and also only downloads if the file has updates). So, we could potentially run it with cron eg every 5 mins (useful to get quick updates of current attacks), instead of the current once-a-day setup.
+- What to log? - Define if any logging would be useful (and re-run load tests)
 - Separate container for the update-ipsets.sh that stores files in shared volume (*) / cloud storage. Then, the app service could read them from that volume instead of file within docker container.
 	- (*) eg: we could setup a k8s multi-container pod, where both containers (updater and service) have access to shared volume - https://kubernetes.io/docs/concepts/workloads/pods/pod/
 - Desirable User Story - Whitelisting
