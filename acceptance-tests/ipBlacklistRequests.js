@@ -8,13 +8,12 @@ const MAX_LATENCY_THRESHOLD = 200;
 exports.ipBlacklistRequests = function ipBlacklistRequests(requests, callback) {
   const urls = Array(requests)
     .fill(0)
-    .map(value => "http://localhost:8080/ips/" + randomIp());
+    .map(() => "http://localhost:8080/ips/" + randomIp());
   const overallStartTime = new Date().getTime();
   async.mapLimit(
     urls,
     5,
     async function(url) {
-      var response;
       var options = {
         method: "GET",
         uri: url,
@@ -86,13 +85,10 @@ function printResultsSummary(aggregatedResults) {
   const {
     averageLatency,
     maxLatency,
-    requestsWithUnexpectedStatus,
-    requestsOverMaxLatency,
     positives,
     negatives,
     requestsPerSecond,
-    requests,
-    results
+    requests
   } = aggregatedResults;
   console.log("average latency: " + averageLatency + "ms");
   console.log("max latency: " + maxLatency + "ms");
@@ -113,8 +109,6 @@ function checkResults(aggregatedResults) {
     averageLatency,
     requestsWithUnexpectedStatus,
     requestsOverMaxLatency,
-    positives,
-    negatives,
     requestsPerSecond,
     requests,
     results
