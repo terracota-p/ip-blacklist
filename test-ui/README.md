@@ -1,6 +1,6 @@
-# anomaly-detections-ip test-ui
+# ip-blacklist test-ui
 
-Web user interface for anomaly-detections-ip for testing purposes.
+Web user interface for ip-blacklist for testing purposes.
 
 ## Build
 

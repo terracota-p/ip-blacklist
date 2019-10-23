@@ -1,4 +1,4 @@
-# anomaly-detections-ip
+# ip-blacklist
 
 Service to check if IP is blacklisted.
 
@@ -13,15 +13,15 @@ mvn clean install
 Docker image:
 
 ```shell script
-docker build . -t anomaly-detections-ip:latest
+docker build . -t ip-blacklist:latest
 ```
 
 ## Run docker
 
 ```shell script
-docker run --name anomaly-detections-ip -p 8080:8080 -d anomaly-detections-ip:latest
+docker run --name ip-blacklist -p 8080:8080 -d ip-blacklist:latest
 # See logs:
-docker logs anomaly-detections-ip -f
+docker logs ip-blacklist -f
 ```
 
 ## Test
@@ -43,7 +43,7 @@ Eg:
 
 ```shell script
 export NETSETPATH=./src/test/resources/firehol_level1.netset,./src/test/resources/firehol_level2.netset \
-  && java -jar target/anomaly-detections-ip-0.0.0.jar
+  && java -jar target/ip-blacklist-0.0.0.jar
 ```
 
 ## Acceptance tests

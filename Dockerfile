@@ -1,7 +1,7 @@
 FROM adoptopenjdk:11-jre-openj9-bionic
 
 RUN mkdir /opt/app
-COPY target/anomaly-detections-ip-0.0.0.jar /opt/app/app.jar
+COPY target/ip-blacklist-0.0.0.jar /opt/app/app.jar
 
 RUN apt-get update \
     && apt-get install -y cron

@@ -1,6 +1,6 @@
 # acceptance-tests
 
-Acceptance tests for anomaly-detections-ip.
+Acceptance tests for ip-blacklist.
 
 ## Build
 

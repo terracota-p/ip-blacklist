@@ -1,0 +1,235 @@
+STORIES
+
+*US1) As admin, I want to optionally not allow traffic from untrusted IP addresses, so that I get increased security*
+
+```ACCEPTANCE CRITERIA
+
+Scenario 1 - Negative (IP not blacklisted)
+	Given configured blacklists firehol_level1,firehol_level2
+	And <IP> does not match
+	When I GET /ips/<IP>
+	Then response status is 204 (No content)
+
+	Examples:
+	<IP>
+	1.1.1.1
+
+Scenario 2.1 - Positive (specific IP blacklisted)
+	Given configured blacklists firehol_level1,firehol_level2
+	And <IP> matches in <blacklist>
+	When I GET /ips/<IP>
+	Then response is 200 (OK)
+	And response body is {"blacklist": "<blacklist>", "IP":"<IP>"}
+
+	Examples:
+	<IP>           <blacklist>
+	5.9.253.173    firehol_level1
+
+Scenario 2.2 - Positive (subnet blacklisted)
+	Given configured blacklists firehol_level1,firehol_level2
+	And <IP> matches in <blacklist> <subnet>
+	When I GET /ips/<IP>
+	Then response is 200 (OK)
+	And response body is {"blacklist": "<blacklist>", "subnet":"<subnet>"}
+
+	Examples:
+	<IP>           <subnet>         <blacklist>
+	31.184.237.13  31.184.237.0/24  firehol_level1
+	5.63.151.42    5.63.151.0/24    firehol_level2
+```
+
+*US2) As admin, I want the untrusted IP addresses list to be up to date with https://github.com/firehol/blocklist-ipsets, so as to get automatic update without manual intervention*
+
+```ACCEPTANCE CRITERIA
+
+Scenario 1.1 - Periodic reload - IP newly blacklisted
+	Given <IP> was not blacklisted (GET /ips/<IP> returns negative match)
+	When periodic update on scheduled time
+	And <IP> is newly blacklisted
+	Then GET /ips/<IP> returns positive match
+
+Scenario 1.2 - Periodic reload - IP not blacklisted anymore
+	Given <IP> was blacklisted (GET /ips/<IP> returns positive match)
+	When periodic update on scheduled time
+	And <IP> is not blacklisted anymore
+	Then GET /ips/<IP> returns negative match
+```
+
+*US3) As end user, I want untrusted IP requests to reply to requests very quickly, so as to keep login latency as low as possible*
+
+```ACCEPTANCE CRITERIA
+
+Scenario 1 - Low latency under load
+	Given load of ~1000 requests/s
+	When GET /ips/<IP>
+	Then response received in less than 200ms maximum
+	And response received in less than 50ms on average
+```
+
+*US4) As internal user, I want a UI where I can send IP queries to the untrusted IP service and get results displayed on a web page, so that I get a simple way to test the service*
+
+```ACCEPTANCE CRITERIA
+
+Scenario 1 - Query IP
+	When I query <IP>
+	Then negative or positive result is displayed
+	And metadata is displayed if exists
+```
+
+
+PENDING TASKS
+- At this stage, I'd like also to confirm that we agree on the *REST interface*. I propose this, please let me know if you agree:
+	`GET /ips/{ip}`
+	Examples:
+	```GET /ips/1.1.1.1 -> 204 (No content for a negative response)
+	GET /ips/0.0.0.0 -> 200 (OK for a positive "blacklisted" response)```
+- load tests
+	-> with firehol_level1.netset at ~1000 req/s rate => avg 0.69ms, max 43ms (file:///Users/c.friaszapater/git/ext-carlosz-ex/load-tests/report_firehol_level1/index.html)
+- add comma-separated list of files to load, use level1 and level2 ipsets
+- repeat load tests
+	-> with firehol level1 and level2 at ~1000 req/s rate => avg 0.72ms, max 54ms (file:///Users/c.friaszapater/git/ext-carlosz-ex/load-tests/report_firehol_levels1and2/index.html)
+- remove old data on reload
+	- test concurrent reload + queries
+- Dockerize
+	- For base docker image, I'll start by using adoptopenjdk:11-jre-openj9-bionic (75.81 MB) if no one complains. Slim, open source, java 11 (LTS), and quite standard nowadays AFAIK:
+		- adoptopenjdk: 11-jre-openj9 (75.81 MB) also called 11.0.4_11-jre-openj9-0.15.1-bionic, 11-jre-openj9-bionic / 11.0.4_11-jdk-openj9-0.15.1 (224.66 MB)
+		- openjdk: 11.0.4-jre (102.46 MB) / 11-jdk-alpine (does not exist) / 11.0.4-jre-slim-buster (69.05 MB) / 11.0.4-jdk-slim-buster (215.83 MB)
+	- provide bundled netsets for using on startup before first update? -> I think bundling the file(s) will be fine and easy enough.
+- periodic reload automated in docker with cron -> with curl first
+- share Acceptance Criteria as executable specs
+- Metadata on positive response
+	- add produces json header
+- UI
+- error case: invalid IP format -> 400
+- Allow IPv6 requests (even if the result will always be "not blacklisted", as current blacklists only contain IPv4 addresses):
+	Given IPv6 <ipv6> not blacklisted
+	When GET /ips/<ipv6>
+	Then 204
+- [no] re-add input param validation for something that does not look like IPv4 nor IPv6?
+- [no] UI js form validation
+- [no] [if bundled initial netset and no initial update] US2 Scenario 2 - Startup - Basic blacklisting until first reload
+		When service starts
+		Then loads bundled firehol_level1
+		And loads empty firehol_level2
+- [no] add jacoco coverage
+- acceptance-tests
+	- ad-hoc load-tests that assert on max and avg latency
+		- improve ad-hoc load-tests with random IPs queried (positive and negative)
+		- integrate them as gherkin test with apickli
+- improve and cleanup tests - IpSetInMemImplLoadTest and IpSetInMemImplReloadConcurrentTest create too many threads and are difficult to understand
+- periodic reload - improve ipsets update mechanism -> update-ipsets.sh
+- prepare demo
+- test again and release
+- Plan for production release -> see README.md
+- TODO start docker and warm up
+- TODO after demo: share link https://bs-kanban-board.herokuapp.com/ - Username `ip-blacklist` / pwd `ext-carlosz-ex`
+
+
+DOUBTS
+- Initial about Requirements:
+	- *Latency*: how much could be the limit? -> "SLA on authentication responses of < 500ms"
+		- expected load to benchmark (requests/s) -> 770 requests / s (for the overall Auth0 platform)
+	- *Frequency of updates* - Would once per day be enough for MVP or we should aim for more frequent updates even at this stage? https://github.com/firehol/blocklist-ipsets github repo is currently "updated once per day"
+	- I guess so, but to confirm: IPs requested to this service will be *internet IPs only*, right? No private IPs (blocklist-ipsets contains private IPs and I want to be sure we'll be fine with them) - https://github.com/firehol/blocklist-ipsets#using-these-ipsets
+		"Apply any blacklist at the internet side of your firewall. Be very careful. The bogons and fullbogons lists contain private, unrouteable IPs that should not be routed on the internet. If you apply such a blocklist on your DMZ or LAN side, you will be blocked out of your firewall."
+	- *Whitelist IPs* - Are we OK to go for now without a whitelist? It seems something that would be useful for the future, but to confirm we can go without it for MPV - https://github.com/firehol/blocklist-ipsets#using-these-ipsets
+- https://github.com/firehol/blocklist-ipsets#which-ones-to-use suggests not to use all ipsets included in the repo
+	- I would use firehol_level1 ipset unless you tell me otherwise. Does it fit well with the requirement? The readme states about it:
+		> Level 1 provides basic security against the most well-known attackers, with the minimum of false positives.
+		> Suitable for basic protection on all internet facing servers, routers and firewalls.
+		-> let’s load a level1 and level2 so we have enough data to test performance against
+- I have also some initial questions for the development team.
+	- Do we have any *best practice in the company for low latency services*? - Does REST seem like a reasonable option for the service? Any other suggestion to take into account? -> REST is OK
+	- PENDING *Preferred stack* - I know java / node are preferred as programming languages by the team. In case we need a DB, we'd like postgresql / any other (which ones)?
+- *Initial design thoughts*:
+	- REST service running on linux in docker container that calls linux ipset utility (*)
+	- script called by cron that updates the ipsets (update will be atomic for ipset utility)
+	- load-tests: in same repository, will call the service's REST API when run, measure, present results
+	- UI: node app (on separate repository if you don't mind creating another)
+	(*) in-mem collections or a DB would be alternatives, but I feel that will be reinventing the wheel in this case, and with much slower performance than ipset
+		a) ipset
+			- pros/cons: must run privileged or with capabilities
+		b) in-mem
+			- pros/cons: ...
+	- figure out how to efficiently query if a given IP is in any of the netsets
+		- dataset size:
+			- firehol_level1 ipset entries: 4.641
+			- firehol_level2 ipset entries: 20.531
+		- possible solutions:
+			- in-mem: like hash:net in ipsets - a hashmap per subnet prefix (/18, /20, /24...), query all of them for a given IP
+			- use ipset to query? http://ipset.netfilter.org/
+			- ? DB: where regexp_like(subnet.*, IP)?
+	- deployment: dev env on local machine?
+		- start db
+		- start service
+		- run acceptance-tests (with load-tests)
+		- start UI
+	- Do you foresee any problems maintaining the corresponding metadata information when using the ipset functionality?
+		Yes, I had not realized, thanks. The ipset just answers if the IP is blacklisted or not, but does not provide info on what subnet matched.
+		? Options:
+			- If returning metadata in the IP query is a must, then:
+			 	- We could still use ipset to return quick response for negatives, and take more time (and dev effort) for the blaclklist positives.
+				- Ditch ipset and use in-mem hashtables for subnets.
+			- Possible alternative use case (to check with @machuga if acceptable):
+				- The IP query endpoint does not return metadata, to keep it super-fast. I expect the vast majority of logins (99%?) to be negatives, so those would benefit from this solution.
+				- Post-MVP: another endpoint is added, to query for details of a blacklisted IP. The use case we discussed was about "log or show to the user the reason of rejected login", and was just my suggestion. The UI could call this detail endpoint only if the user clicks a "more info" button for instance...
+- Also, update on our target design, as per last conversations (*):
+	- REST service running in docker container that manages in-mem IP and subnet collections
+	- script called by cron that updates the ipsets (update will be atomic as per reload functionality tested on concurrency)
+	- load-tests: in same repository, will call the service's REST API when run, measure, present results
+	- UI: node + express app (will be in subfolder of same repo for now, we can move it to its own repo later / before going to prod)
+	(*) Performance of in-mem implementation looks good, so we can stick with it and not need the ipset utility (with the related issues about responding with metadata and privileged docker run). (editado)
+- PENDING Regarding the *ipsets update mechanism*, I'm thinking about two options to download the ipsets periodically:
+	a) Run firehol `update-ipsets.sh`: downloads from each list maintainer. This option is more suitable for production. Requires installing firehol to use the update-ipsets.sh and a bit of config, but I've tried it and it's not complex. Requires installing some libs, so will make our docker image bigger.
+	b) `git pull`: download from the blocklist-ipsets github repo. Quicker, but not good for prod as per this warning at https://github.com/firehol/blocklist-ipsets/wiki :
+	>You should not use the ipsets in this repo in production systems. YOU SHOULD ALWAYS DOWNLOAD THE IP LISTS DIRECTLY FROM THEIR MAINTAINERS.
+	>update-ipsets can do this for you!..."
+	Opinions? Else, I'll probably select b) in the afternoon to implement the periodic reload in the app docker container.
+- PENDING BTW, I'll dockerize the service as previously hinted in the design. For that, I'm thinking about *bundling an initial firehol_level1.netset included in the docker image*, for using on app startup, before first update is executed (just in case it took too long to download, and in the meantime the basic blacklisting would be available with quick startup time). Do you think we need that for MVP, or could we just leave that for the plan to go to production?
+
+DOUBTS FOR ME
+- how to store and query the ipsets:
+	- [NO] a) serve static content? - https://github.com/firehol/blocklist-ipsets/wiki#downloading-ip-lists says:
+	"it can be monitored over the web, using a site exactly the same with http://iplists.firehol.org. Actually, this site is the monitor of my personal update-ipsets installation. You just need a web server capable of serving static content. No databases or application servers are required"
+		- https://github.com/firehol/blocklist-ipsets/wiki/Monitoring-update-ipsets
+	- [NO] b) use update-ipsets.sh to load into kernel, then use it somehow as FireHOL does?
+	- [YES] c) read the ipsets on every update and load them to in-mem IpSet (as many hashtables as subnet prefixes) for query?
+	- [NO] d) read the ipsets on every update and load them to a db for query?
+		- ? PostgreSQL?
+- XXX empty bundled level2 for startup, not to get false positives
+	- ALTERNATIVE: update netsets in start.sh (makes application start dependent on external resource)
+
+
+
+REPOSITORIES
+https://github.com/auth0/ext-carlosz-ex
+
+
+OTHER NOTES
+
+Install https://github.com/firehol/blocklist-ipsets/wiki/installing-update-ipsets in ubuntu docker container and check size of ipsets and netsets:
+- `docker pull debian:buster-20190910`
+	- XXX OR, trying: `docker pull ubuntu:bionic-20190912.1`
+- run `docker run -it debian:buster-20190910 /bin/bash` and:
+ 	- install ( http://firehol.org/installing/debian/ ):
+		apt-get update
+		apt-get install firehol
+		cat /etc/default/firehol
+	- install ( https://github.com/firehol/blocklist-ipsets/wiki/installing-update-ipsets ):
+		`...` TODO install-update-ipsets.sh
+	- enable and download level1 lists (TODO also level2):
+		apt-get install unzip
+		update-ipsets enable feodo palevo sslbl zeus zeus_badips dshield spamhaus_drop spamhaus_edrop fullbogons firehol_level1 bambenek_c2 ransomware_rw
+		update-ipsets
+
+	- count netset and ipset entries:
+			# It's included in the comments section at the beginning of:
+			cat /etc/firehol/ipsets/firehol_level1.netset
+
+[DECLINED] If we want to use the `ipset` utility (http://ipset.netfilter.org/):
+- `ipset list -n` error: "ipset v6.38: Kernel error received: Operation not permitted" seems to be due to docker container not run in privileged mode -> `docker run --privileged ...`
+	- DECLINED investigate drawbacks: If you were planning to stand this up as a production service, are there any reasons you wouldn't want to do this?
+- DECLINED populate kernel ipset and use ipset command
+	- try https://github.com/firehol/firehol/wiki/Working-with-IPSETs#firehol-ipset-extensions / https://github.com/firehol/blocklist-ipsets#using-them-in-firehol
+	- see http://ipset.netfilter.org/ , http://ipset.netfilter.org/ipset.man.html
+	- if we need to reduce the number of prefixes in subnets in a netset: https://github.com/firehol/iprange/wiki

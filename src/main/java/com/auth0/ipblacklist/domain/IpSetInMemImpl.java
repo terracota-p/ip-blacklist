@@ -92,7 +92,7 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
         }
       } catch (InvalidIpv4Exception e) {
         // Throw unchecked exception to allow add() being called in java streams forEach()
-        throw new RuntimeException(e);
+        throw new IllegalArgumentException(e);
       }
     }
 
@@ -114,11 +114,10 @@ public class IpSetInMemImpl implements IpSet, CommandLineRunner {
       }
 
       metadata = anyNetmapMatches(ip);
-      if (metadata.isPresent()) {
-        return Mono.just(MatchResult.positive(metadata.get()));
-      }
+      return metadata.map(blacklistMetadata ->
+        Mono.just(MatchResult.positive(blacklistMetadata)))
+        .orElseGet(() -> Mono.just(MatchResult.negative()));
 
-      return Mono.just(MatchResult.negative());
     }
 
     private Optional<BlacklistMetadata> anyNetmapMatches(String ip) {

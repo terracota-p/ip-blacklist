@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.auth0</groupId>
-    <artifactId>anomaly-detections-ip</artifactId>
+    <artifactId>ip-blacklist</artifactId>
     <version>0.0.0</version>
-    <name>anomaly-detections-ip</name>
+    <name>ip-blacklist</name>
     <description>Check IP against blacklists</description>
 
     <properties>

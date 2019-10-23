@@ -1,6 +1,6 @@
 # load-tests
 
-Benchmark anomaly-detections-ip.
+Benchmark ip-blacklist.
 
 ## Run
 
@@ -9,7 +9,7 @@ Install jmeter.
 Run, eg:
 
 ```shell script
-/Applications/apache-jmeter-5.1.1/bin/jmeter -n -t ./anomaly-detections-ip_test-plan.jmx -l log.jtl -e -o report
+/Applications/apache-jmeter-5.1.1/bin/jmeter -n -t ./ip-blacklist_test-plan.jmx -l log.jtl -e -o report
 ```
 
 Results:
@@ -18,4 +18,4 @@ Results:
 
 ## Tweak
 
-Run jmeter in GUI mode and open `./anomaly-detections-ip_test-plan.jmx`.
+Run jmeter in GUI mode and open `./ip-blacklist_test-plan.jmx`.
